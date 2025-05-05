@@ -65,6 +65,7 @@ exports.myProfile = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 exports.changePassword = async (req, res) => {
   try {
     const { current_pass, new_pass, confirm_pass } = req.body;
@@ -105,6 +106,22 @@ exports.changePassword = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+exports.logoutManager = async (req, res) => {
+  try {
+    res.status(200).json({
+      success: true,
+      message: 'Logged out successfully',
+      data: {}
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
 
 const transporter = nodemailer.createTransport({
   service: "gmail",

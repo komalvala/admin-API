@@ -69,6 +69,61 @@ exports.myProfile = async (req, res) => {
   }
 };
 
+exports.updateAdminProfile = async (req, res) => {
+  try {
+    const { name, email } = req.body;
+    
+    const updateFields = {};
+    if (name) updateFields.name = name;
+    if (email) updateFields.email = email;
+
+    if (req.file) {
+      const admin = await Admin.findById(req.user.id);
+      
+      if (admin && admin.profilePicture !== 'default-profile.jpg') {
+        const oldPicturePath = path.join('uploads/profile-pictures', admin.profilePicture);
+        if (fs.existsSync(oldPicturePath)) {
+          fs.unlinkSync(oldPicturePath);
+        }
+      }
+      
+      updateFields.profilePicture = req.file.filename;
+    }
+
+    const admin = await Admin.findByIdAndUpdate(
+      req.user.id,
+      updateFields,
+      { new: true, runValidators: true }
+    );
+
+    if (!admin) {
+      if (req.file) {
+        fs.unlinkSync(req.file.path);
+      }
+      
+      return res.status(404).json({
+        success: false,
+        message: 'Admin not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: admin
+    });
+  } catch (error) {
+    if (req.file) {
+      fs.unlinkSync(req.file.path);
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+
 exports.changePassword = async (req, res) => {
   try {
     const { current_pass, new_pass, confirm_pass } = req.body;
@@ -110,6 +165,37 @@ exports.changePassword = async (req, res) => {
   }
 };
 
+exports.deleteAdmin = async (req, res) => {
+  try {
+    if (req.user.id === req.params.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot delete your own account'
+      });
+    }
+
+    const admin = await Admin.findById(req.params.id);
+
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: 'Admin not found'
+      });
+    }
+
+    await admin.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      message: 'Admin deleted successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
 
 exports.addManager = async (req, res) => {
   try {
@@ -153,6 +239,42 @@ exports.viewAllManager = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+exports.updateManager = async (req, res) => {
+  try {
+    const { name, email, department, contactNumber, active } = req.body;
+    
+    const updateFields = {};
+    if (name) updateFields.name = name;
+    if (email) updateFields.email = email;
+    if (department) updateFields.department = department;
+    if (contactNumber) updateFields.contactNumber = contactNumber;
+    if (active !== undefined) updateFields.active = active;
+
+    const manager = await Manager.findByIdAndUpdate(
+      req.params.id,
+      updateFields,
+      { new: true, runValidators: true }
+    );
+
+    if (!manager) {
+      return res.status(404).json({
+        success: false,
+        message: 'Manager not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: manager
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
   }
 };
 
@@ -240,12 +362,10 @@ exports.adminResetPassword = async (req, res) => {
     if (new_pass !== confirm_pass) {
       return res.status(400).json({ message: "Passwords do not match" });
     }
-
     const admin = await Admin.findById(adminId);
     if (!admin) {
       return res.status(404).json({ message: "Admin not found" });
     }
-
     const hashedPassword = await bcrypt.hash(new_pass, 10);
     admin.password = hashedPassword;
     await admin.save();
@@ -256,3 +376,6 @@ exports.adminResetPassword = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+
+// https://github.com/pateljenish9878/API-NodeJs 

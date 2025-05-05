@@ -11,7 +11,8 @@ const {
   deleteEmployee,
   activateEmployee,
   employeeForgotPassword,
-  employeeResetPassword
+  employeeResetPassword,
+  logoutEmployee
 } = require("../controller/employee.controller");
 
 routes.post("/register", uploadImage.single('profileImage'), registerEmployee);
@@ -23,5 +24,7 @@ routes.delete("/delete-employee/:id", verifyEmployeeToken, deleteEmployee);
 routes.put("/activate-employee/:id", verifyEmployeeToken, activateEmployee);
 routes.post("/forgot-password", employeeForgotPassword);
 routes.post('/reset-password/:employeeId', employeeResetPassword);
+routes.post('/logout',  logoutEmployee);
+
 
 module.exports = routes;

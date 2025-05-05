@@ -57,6 +57,22 @@ exports.employeeProfile = async (req, res) => {
   }
 };
 
+exports.logoutEmployee = async (req, res) => {
+  try {
+    res.status(200).json({
+      success: true,
+      message: 'Logged out successfully',
+      data: {}
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+
 exports.changeEmployeePassword = async (req, res) => {
   try {
     const { current_pass, new_pass, confirm_pass } = req.body;
