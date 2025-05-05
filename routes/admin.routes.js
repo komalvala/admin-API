@@ -5,9 +5,7 @@ const uploadImage = require("../middleware/uploadImage");
 const { verifyAdminToken } = require('../middleware/verifyToken');
 
 routes.post("/register", uploadImage.single('profileImage'), registerAdmin);
-
 routes.post("/login", loginAdmin);   
-
 routes.get("/profile", verifyAdminToken, myProfile); 
 
 routes.post("/change-password", verifyAdminToken, changePassword);
