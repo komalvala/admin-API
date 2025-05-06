@@ -181,3 +181,88 @@ exports.managerResetPassword = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+// Add Employee
+exports.addEmployee = async (req, res) => {
+  try {
+    let { firstname, lastname, email, password, gender, profileImage } = req.body;
+    let employee = await Employee.findOne({ email: email, isDelete: false });
+
+    if (employee) {
+      return res.status(400).json({ message: "Employee already exists" });
+    }
+
+    if (req.file) {
+      profileImage = `/uploads/${req.file.filename}`;
+    }
+
+    let hashPassword = await bcrypt.hash(password, 10);
+
+    employee = await Employee.create({
+      firstname,
+      lastname,
+      email,
+      gender,
+      password: hashPassword,
+      profileImage,
+    });
+
+    await sendMail(email, password);
+
+    return res.status(201).json({ message: "New Employee Added Successfully" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+// View All Employees
+exports.viewAllEmployee = async (req, res) => {
+  try {
+    let employees = await Employee.find({ isDelete: false });
+
+    res.cookie("employee_view", "admin_view");
+    return res
+      .status(200)
+      .json({ message: "All Employees Fetched Successfully", data: employees });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+// Update Employee
+exports.updateEmployee = async (req, res) => {
+  try {
+    const { name, email, department, contactNumber, active } = req.body;
+
+    const updateFields = {};
+    if (name) updateFields.name = name;
+    if (email) updateFields.email = email;
+    if (department) updateFields.department = department;
+    if (contactNumber) updateFields.contactNumber = contactNumber;
+    if (active !== undefined) updateFields.active = active;
+
+    const employee = await Employee.findByIdAndUpdate(
+      req.params.id,
+      updateFields,
+      { new: true, runValidators: true }
+    );
+
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: 'Employee not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: employee,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
+  }
+};
