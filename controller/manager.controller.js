@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer'); 
 const Manager = require("../models/manager.model");
-const employee = require("../models/employee.model")
+ const Employee = require("../models/employee.model");
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
