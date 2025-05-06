@@ -182,9 +182,7 @@ exports.deleteAdmin = async (req, res) => {
         message: 'Admin not found'
       });
     }
-
     await admin.deleteOne();
-
     res.status(200).json({
       success: true,
       message: 'Admin deleted successfully'
@@ -194,129 +192,6 @@ exports.deleteAdmin = async (req, res) => {
       success: false,
       message: 'Server error'
     });
-  }
-};
-
-exports.addManager = async (req, res) => {
-  try {
-    let { firstname, lastname, email, password, gender, profileImage } =
-      req.body;
-    let manager = await Manager.findOne({ email: email, isDelete: false });
-
-    if (manager) {
-      return res.status(400).json({ message: "Manager already exist" });
-    }
-
-    if (req.file) {
-      profileImage = `/uploads/${req.file.filename}`;
-    }
-    let hashPassword = await bcrypt.hash(password, 10);
-
-    manager = await Manager.create({
-      firstname,
-      lastname,
-      email,
-      gender,
-      password: hashPassword,
-      profileImage,
-    });
-    await sendMail(email, password);
-    return res.status(201).json({ message: "New Manager Added Success" });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ message: "Internal Server Error" });
-  }
-};
-
-exports.viewAllManager = async (req, res) => {
-  try {
-    let managers = await Manager.find({ isDelete: false });
-    res.cookie("hello", "admin");
-    res.cookie("hello1", "admin");
-    return res
-      .status(200)
-      .json({ message: "All Manager Fetch Success", data: managers });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ message: "Internal Server Error" });
-  }
-};
-
-exports.updateManager = async (req, res) => {
-  try {
-    const { name, email, department, contactNumber, active } = req.body;
-    
-    const updateFields = {};
-    if (name) updateFields.name = name;
-    if (email) updateFields.email = email;
-    if (department) updateFields.department = department;
-    if (contactNumber) updateFields.contactNumber = contactNumber;
-    if (active !== undefined) updateFields.active = active;
-
-    const manager = await Manager.findByIdAndUpdate(
-      req.params.id,
-      updateFields,
-      { new: true, runValidators: true }
-    );
-
-    if (!manager) {
-      return res.status(404).json({
-        success: false,
-        message: 'Manager not found'
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: manager
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Server error'
-    });
-  }
-};
-
-exports.deleteManager = async (req, res) => {
-  try {
-    let id = req.params.id;
-    let manager = await Manager.findOne({ _id: id, isDelete: false });
-    if (!manager) {
-      return res.status(404).json({ message: "Manager Not Found" });
-    }
-    manager = await Manager.findByIdAndUpdate(
-      id,
-      { isDelete: true },
-      { new: true }
-    );
-    return res.status(200).json({ message: "Delete Success" });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ message: "Internal Server Error" });
-  }
-};
-
-
-exports.activateManager = async (req, res) => {
-  try {
-    let id = req.params.id;
-    let manager = await Manager.findById(id);
-    if(!manager){
-      return res.status(404).json({ message: "Manager Not Found" });
-    }
-    if(manager.isDelete == false){
-      return res.status(404).json({ message: "Manager already Activated" });
-    }
-    manager = await Manager.findByIdAndUpdate(
-      id,
-      { isDelete: false },
-      { new: true }
-    );
-    return res.status(200).json({ message: "Manager is Activated Success" });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
@@ -377,5 +252,193 @@ exports.adminResetPassword = async (req, res) => {
   }
 };
 
+exports.addManager = async (req, res) => {
+  try {
+    let { firstname, lastname, email, password, gender, profileImage } =
+      req.body;
+    let manager = await Manager.findOne({ email: email, isDelete: false });
+
+    if (manager) {
+      return res.status(400).json({ message: "Manager already exist" });
+    }
+
+    if (req.file) {
+      profileImage = `/uploads/${req.file.filename}`;
+    }
+    let hashPassword = await bcrypt.hash(password, 10);
+
+    manager = await Manager.create({
+      firstname,
+      lastname,
+      email,
+      gender,
+      password: hashPassword,
+      profileImage,
+    });
+    await sendMail(email, password);
+    return res.status(201).json({ message: "New Manager Added Success" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+exports.viewAllManager = async (req, res) => {
+  try {
+    let managers = await Manager.find({ isDelete: false });
+    res.cookie("hello", "admin");
+    res.cookie("hello1", "admin");
+    return res
+      .status(200)
+      .json({ message: "All Manager Fetch Success", data: managers });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+exports.viewManagerById = async (req, res) => {
+  try {
+    const managerId = req.params.id;
+    const manager = await ManagerModel.findById(managerId);
+
+    if (!manager) {
+      return res.status(404).json({ success: false, message: "Manager not found" });
+    }
+
+    res.status(200).json({ success: true, data: manager });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server error", error: err.message });
+  }
+};
+exports.searchManager = async (req, res) => {
+  try {
+    const { name, email, isActive } = req.query;
+
+    let filter = {};
+
+    if (name) {
+      filter.name = { $regex: name, $options: 'i' }; 
+    }
+
+    if (email) {
+      filter.email = { $regex: email, $options: 'i' };
+    }
+
+    if (isActive === 'true' || isActive === 'false') {
+      filter.isActive = isActive === 'true';
+    }
+
+    const managers = await ManagerModel.find(filter);
+
+    res.status(200).json({
+      success: true,
+      message: "Managers fetched successfully",
+      count: managers.length,
+      data: managers,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: err.message,
+    });
+  }
+};
+
+exports.activateManager = async (req, res) => {
+  try {
+    let id = req.params.id;
+    let manager = await Manager.findById(id);
+    if(!manager){
+      return res.status(404).json({ message: "Manager Not Found" });
+    }
+    if(manager.isDelete == false){
+      return res.status(404).json({ message: "Manager already Activated" });
+    }
+    manager = await Manager.findByIdAndUpdate(
+      id,
+      { isDelete: false },
+      { new: true }
+    );
+    return res.status(200).json({ message: "Manager is Activated Success" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+exports.deactivateManager = async (req, res) => {
+  try {
+    const managerId = req.params.id;
+
+    const updatedManager = await ManagerModel.findByIdAndUpdate(
+      managerId,
+      { isActive: false },
+      { new: true }
+    );
+
+    if (!updatedManager) {
+      return res.status(404).json({ success: false, message: "Manager not found" });
+    }
+
+    res.status(200).json({ success: true, message: "Manager deactivated successfully", data: updatedManager });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server error", error: err.message });
+  }
+};
 
 
+exports.updateManager = async (req, res) => {
+  try {
+    const { name, email, department, contactNumber, active } = req.body;
+    
+    const updateFields = {};
+    if (name) updateFields.name = name;
+    if (email) updateFields.email = email;
+    if (department) updateFields.department = department;
+    if (contactNumber) updateFields.contactNumber = contactNumber;
+    if (active !== undefined) updateFields.active = active;
+
+    const manager = await Manager.findByIdAndUpdate(
+      req.params.id,
+      updateFields,
+      { new: true, runValidators: true }
+    );
+
+    if (!manager) {
+      return res.status(404).json({
+        success: false,
+        message: 'Manager not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: manager
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+exports.deleteManager = async (req, res) => {
+  try {
+    let id = req.params.id;
+    let manager = await Manager.findOne({ _id: id, isDelete: false });
+    if (!manager) {
+      return res.status(404).json({ message: "Manager Not Found" });
+    }
+    manager = await Manager.findByIdAndUpdate(
+      id,
+      { isDelete: true },
+      { new: true }
+    );
+    return res.status(200).json({ message: "Delete Success" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};

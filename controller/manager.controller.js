@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer'); 
 const Manager = require("../models/manager.model");
+const employee = require("../models/employee.model")
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -229,7 +230,50 @@ exports.viewAllEmployee = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+exports.viewEmployeeById = async (req, res) => {
+  try {
+    const employeeId = req.params.id;
 
+    const employee = await EmployeeModel.findById(employeeId);
+
+    if (!employee) {
+      return res.status(404).json({ success: false, message: "Employee not found" });
+    }
+
+    res.status(200).json({ success: true, data: employee });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server error", error: err.message });
+  }
+};
+exports.searchEmployee = async (req, res) => {
+  try {
+    const { name, email, isActive } = req.query;
+
+    let filter = {};
+
+    if (name) {
+      filter.name = { $regex: name, $options: 'i' };
+    }
+
+    if (email) {
+      filter.email = { $regex: email, $options: 'i' };
+    }
+
+    if (isActive === 'true' || isActive === 'false') {
+      filter.isActive = isActive === 'true';
+    }
+
+    const employees = await EmployeeModel.find(filter);
+
+    res.status(200).json({
+      success: true,
+      count: employees.length,
+      data: employees,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server error", error: err.message });
+  }
+};
 // Update Employee
 exports.updateEmployee = async (req, res) => {
   try {

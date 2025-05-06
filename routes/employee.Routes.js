@@ -10,6 +10,7 @@ const {
   viewAllEmployee,
   deleteEmployee,
   activateEmployee,
+  deactivateEmployee,
   employeeForgotPassword,
   employeeResetPassword,
   logoutEmployee
@@ -22,9 +23,10 @@ routes.post("/change-password", verifyEmployeeToken, changeEmployeePassword);
 routes.get("/view-employee", verifyEmployeeToken, viewAllEmployee);
 routes.delete("/delete-employee/:id", verifyEmployeeToken, deleteEmployee);
 routes.put("/activate-employee/:id", verifyEmployeeToken, activateEmployee);
+routes.put("/deactivate-employee/:id",verifyEmployeeToken , deactivateEmployee);
 routes.post("/forgot-password", employeeForgotPassword);
 routes.post('/reset-password/:employeeId', employeeResetPassword);
-routes.post('/logout',  logoutEmployee);
+routes.post('/logoutemployee',  logoutEmployee);
 
 
 module.exports = routes;

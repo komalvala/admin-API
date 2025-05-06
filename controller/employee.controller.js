@@ -152,6 +152,25 @@ exports.activateEmployee = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+exports.deactivateEmployee = async (req, res) => {
+  try {
+    const employeeId = req.params.id;
+
+    const updatedEmployee = await EmployeeModel.findByIdAndUpdate(
+      employeeId,
+      { isActive: false },
+      { new: true }
+    );
+
+    if (!updatedEmployee) {
+      return res.status(404).json({ success: false, message: "Employee not found" });
+    }
+
+    res.status(200).json({ success: true, message: "Employee deactivated successfully", data: updatedEmployee });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server error", error: err.message });
+  }
+};
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
